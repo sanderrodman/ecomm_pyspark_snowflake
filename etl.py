@@ -19,7 +19,7 @@ def extract_data(spark, raw_dir):
 def transform_data(customers_df, products_df, orders_df, reviews_df):
     print("Transforming data...")
     
-    # 1. Clean missing values in orders (discount_code)
+    # Clean missing values in orders
     # Replaced missing discount codes with 'NONE'
     orders_df = orders_df.fillna({"discount_code": "NONE"})
     
@@ -27,7 +27,7 @@ def transform_data(customers_df, products_df, orders_df, reviews_df):
     orders_df = orders_df.withColumn("order_date", to_date(col("order_date")))
     customers_df = customers_df.withColumn("registration_date", to_date(col("registration_date")))
     
-    # 2. Fact Orders: Join Orders with Customers and Products
+    # Join Orders with Customers and Products
     fact_orders_df = orders_df.alias("o") \
         .join(customers_df.alias("c"), col("o.customer_id") == col("c.customer_id"), "left") \
         .join(products_df.alias("p"), col("o.product_id") == col("p.product_id"), "left") \
@@ -48,7 +48,7 @@ def transform_data(customers_df, products_df, orders_df, reviews_df):
     # Calculate profit margin per order
     fact_orders_df = fact_orders_df.withColumn("profit", col("total_amount") - (col("product_cost") * col("quantity")))
     
-    # 3. Aggregate daily sales summary
+    #Aggregate daily sales summary
     daily_sales_df = fact_orders_df \
         .groupBy("order_date") \
         .agg(
@@ -101,7 +101,6 @@ def load_data(fact_orders_df, daily_sales_df):
         print("Please ensure your .env file is configured correctly and you have created the required Snowflake objects.")
 
 if __name__ == "__main__":
-    # We must include the snowflake-jdbc and spark-snowflake packages for this to work
     import sys
     spark = SparkSession.builder \
         .appName("ECommerce_ETL") \
